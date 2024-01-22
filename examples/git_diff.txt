@@ -1,0 +1,16 @@
+diff --git a/export.py b/export.py
+index c53c2ae0..6c330a52 100644
+--- a/export.py
++++ b/export.py
+@@ -941,9 +941,9 @@ def save_git_log(output_dir: str, max_commits: int = 3):
+ def main(opt):
+     for opt.weights in opt.weights if isinstance(opt.weights, list) else [opt.weights]:
+         run(**vars(opt))
+-    output_results_path = Path(opt.weights[0]).parent
++    output_results_path = Path(opt.weights).parent
+     save_git_log(str(output_results_path))
+-    with open(os.path.join(output_results_path, 'args.txt'), 'w') as f:
++    with open(os.path.join(output_results_path, 'export_args.txt'), 'w') as f:
+         f.write(str(opt))
+ 
+ 

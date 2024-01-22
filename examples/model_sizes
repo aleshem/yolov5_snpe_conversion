@@ -1,0 +1,114 @@
+model.info()
+_forward_once In torch.Size([1, 3, 32, 32])
+Detect In0 x[0].shape: torch.Size([1, 128, 4, 4]) Type=<bound method Module.type of Conv2d(128, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[0].shape: torch.Size([1, 18, 4, 4]) Type=<bound method Module.type of Conv2d(128, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=4, nx=4 na=3 no=6
+Detect Out1 x[0].shape: torch.Size([1, 3, 6, 16]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (1, 3, 6, 16)
+Detect Out2 x[0].shape: torch.Size([1, 3, 16, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[0] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 48, 6])
+Detect z[0].shape=torch.Size([1, 48, 6])
+Detect In0 x[1].shape: torch.Size([1, 256, 2, 2]) Type=<bound method Module.type of Conv2d(256, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[1].shape: torch.Size([1, 18, 2, 2]) Type=<bound method Module.type of Conv2d(256, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=2, nx=2 na=3 no=6
+Detect Out1 x[1].shape: torch.Size([1, 3, 6, 4]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (1, 3, 6, 4)
+Detect Out2 x[1].shape: torch.Size([1, 3, 4, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[1] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 12, 6])
+Detect z[0].shape=torch.Size([1, 48, 6])
+Detect In0 x[2].shape: torch.Size([1, 512, 1, 1]) Type=<bound method Module.type of Conv2d(512, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[2].shape: torch.Size([1, 18, 1, 1]) Type=<bound method Module.type of Conv2d(512, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=1, nx=1 na=3 no=6
+Detect Out1 x[2].shape: torch.Size([1, 3, 6, 1]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (1, 3, 6, 1)
+Detect Out2 x[2].shape: torch.Size([1, 3, 1, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[2] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 3, 6])
+Detect z[0].shape=torch.Size([1, 48, 6])
+YOLOv5s-LeakyReLU_1class summary: 157 layers, 7012822 parameters, 0 gradients, 15.8 GFLOPs
+
+_____________________________________________________________________________________________
+
+_forward_once In torch.Size([1, 3, 256, 320])
+In 0 torch.Size([1, 3, 256, 320])  models.common.Conv
+Out 0 torch.Size([1, 32, 128, 160])  models.common.Conv
+In 1 torch.Size([1, 32, 128, 160])  models.common.Conv
+
+PyTorch: starting from /home/ubuntu/multi/yolov5/runs/train/exp68/weights/best.pt with output shape (1, 5040, 6) (13.8 MB)
+
+ONNX: starting export with onnx 1.15.0...
+Out 1 torch.Size([1, 64, 64, 80])  models.common.Conv
+In 2 torch.Size([1, 64, 64, 80])  models.common.C3
+Out 2 torch.Size([1, 64, 64, 80])  models.common.C3
+In 3 torch.Size([1, 64, 64, 80])  models.common.Conv
+Out 3 torch.Size([1, 128, 32, 40])  models.common.Conv
+In 4 torch.Size([1, 128, 32, 40])  models.common.C3
+Out 4 torch.Size([1, 128, 32, 40])  models.common.C3
+In 5 torch.Size([1, 128, 32, 40])  models.common.Conv
+Out 5 torch.Size([1, 256, 16, 20])  models.common.Conv
+In 6 torch.Size([1, 256, 16, 20])  models.common.C3
+Out 6 torch.Size([1, 256, 16, 20])  models.common.C3
+In 7 torch.Size([1, 256, 16, 20])  models.common.Conv
+Out 7 torch.Size([1, 512, 8, 10])  models.common.Conv
+In 8 torch.Size([1, 512, 8, 10])  models.common.C3
+Out 8 torch.Size([1, 512, 8, 10])  models.common.C3
+In 9 torch.Size([1, 512, 8, 10])  models.common.SPPF
+Out 9 torch.Size([1, 512, 8, 10])  models.common.SPPF
+In 10 torch.Size([1, 512, 8, 10])  models.common.Conv
+Out 10 torch.Size([1, 256, 8, 10])  models.common.Conv
+In 11 torch.Size([1, 256, 8, 10])  torch.nn.modules.upsampling.Upsample
+Out 11 torch.Size([1, 256, 16, 20])  torch.nn.modules.upsampling.Upsample
+In 12 models.common.Concat [torch.Size([1, 256, 16, 20]), torch.Size([1, 256, 16, 20])]
+Out 12 torch.Size([1, 512, 16, 20])  models.common.Concat
+In 13 torch.Size([1, 512, 16, 20])  models.common.C3
+Out 13 torch.Size([1, 256, 16, 20])  models.common.C3
+In 14 torch.Size([1, 256, 16, 20])  models.common.Conv
+Out 14 torch.Size([1, 128, 16, 20])  models.common.Conv
+In 15 torch.Size([1, 128, 16, 20])  torch.nn.modules.upsampling.Upsample
+Out 15 torch.Size([1, 128, 32, 40])  torch.nn.modules.upsampling.Upsample
+In 16 models.common.Concat [torch.Size([1, 128, 32, 40]), torch.Size([1, 128, 32, 40])]
+Out 16 torch.Size([1, 256, 32, 40])  models.common.Concat
+In 17 torch.Size([1, 256, 32, 40])  models.common.C3
+Out 17 torch.Size([1, 128, 32, 40])  models.common.C3
+In 18 torch.Size([1, 128, 32, 40])  models.common.Conv
+Out 18 torch.Size([1, 128, 16, 20])  models.common.Conv
+In 19 models.common.Concat [torch.Size([1, 128, 16, 20]), torch.Size([1, 128, 16, 20])]
+Out 19 torch.Size([1, 256, 16, 20])  models.common.Concat
+In 20 torch.Size([1, 256, 16, 20])  models.common.C3
+Out 20 torch.Size([1, 256, 16, 20])  models.common.C3
+In 21 torch.Size([1, 256, 16, 20])  models.common.Conv
+Out 21 torch.Size([1, 256, 8, 10])  models.common.Conv
+In 22 models.common.Concat [torch.Size([1, 256, 8, 10]), torch.Size([1, 256, 8, 10])]
+Out 22 torch.Size([1, 512, 8, 10])  models.common.Concat
+In 23 torch.Size([1, 512, 8, 10])  models.common.C3
+Out 23 torch.Size([1, 512, 8, 10])  models.common.C3
+In 24 models.yolo.Detect [torch.Size([1, 128, 32, 40]), torch.Size([1, 256, 16, 20]), torch.Size([1, 512, 8, 10])]
+Detect In0 x[0].shape: torch.Size([1, 128, 32, 40]) Type=<bound method Module.type of Conv2d(128, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[0].shape: torch.Size([1, 18, 32, 40]) Type=<bound method Module.type of Conv2d(128, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=32, nx=40 na=3 no=6
+Detect Out1 x[0].shape: torch.Size([1, 3, 6, 1280]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (tensor(1), 3, 6, tensor(1280))
+Detect Out2 x[0].shape: torch.Size([1, 3, 1280, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[0] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 3840, 6])
+Detect z[0].shape=torch.Size([1, 3840, 6])
+Detect In0 x[1].shape: torch.Size([1, 256, 16, 20]) Type=<bound method Module.type of Conv2d(256, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[1].shape: torch.Size([1, 18, 16, 20]) Type=<bound method Module.type of Conv2d(256, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=16, nx=20 na=3 no=6
+Detect Out1 x[1].shape: torch.Size([1, 3, 6, 320]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (tensor(1), 3, 6, tensor(320))
+Detect Out2 x[1].shape: torch.Size([1, 3, 320, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[1] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 960, 6])
+Detect z[0].shape=torch.Size([1, 3840, 6])
+Detect In0 x[2].shape: torch.Size([1, 512, 8, 10]) Type=<bound method Module.type of Conv2d(512, 18, kernel_size=(1, 1), stride=(1, 1))>
+Detect Out0 x[2].shape: torch.Size([1, 18, 8, 10]) Type=<bound method Module.type of Conv2d(512, 18, kernel_size=(1, 1), stride=(1, 1))>
+bs=1, ny=8, nx=10 na=3 no=6
+Detect Out1 x[2].shape: torch.Size([1, 3, 6, 80]) Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = (tensor(1), 3, 6, tensor(80))
+Detect Out2 x[2].shape: torch.Size([1, 3, 80, 6]) Type=Permute(0, 1, 3, 2)
+Detect x[2] y_out.shape=y.view(bs, -1, self.no) = torch.Size([1, 240, 6])
+Detect z[0].shape=torch.Size([1, 3840, 6])
+Out 24 models.yolo.Detect [torch.Size([1, 5040, 6])]
+ONNX: export success ✅ 0.9s, saved as /home/ubuntu/multi/yolov5/runs/train/exp68/weights/best.onnx (26.8 MB)
+
+Export complete (1.3s)
+Results saved to /home/ubuntu/multi/yolov5/runs/train/exp68/weights
+Detect:          python detect.py --weights /home/ubuntu/multi/yolov5/runs/train/exp68/weights/best.onnx 
+Validate:        python val.py --weights /home/ubuntu/multi/yolov5/runs/train/exp68/weights/best.onnx 
+PyTorch Hub:     model = torch.hub.load('ultralytics/yolov5', 'custom', '/home/ubuntu/multi/yolov5/runs/train/exp68/weights/best.onnx')  
+Visualize:       https://netron.app
+
+Process finished with exit code 0
+

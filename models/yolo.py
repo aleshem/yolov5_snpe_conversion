@@ -81,6 +81,7 @@ class Detect(nn.Module):
         self.no = nc + 5  # number of outputs per anchor
         self.nl = len(anchors)  # number of detection layers
         self.na = len(anchors[0]) // 2  # number of anchors
+        self.export_to_dlc = False  # if False change from unsupported 5d reshape operation  # temp anat
         self.grid = [torch.empty(0) for _ in range(self.nl)]  # init grid
         self.anchor_grid = [torch.empty(0) for _ in range(self.nl)]  # init anchor grid
         self.register_buffer("anchors", torch.tensor(anchors).float().view(self.nl, -1, 2))  # shape(nl,na,2)
@@ -90,26 +91,51 @@ class Detect(nn.Module):
     def forward(self, x):
         z = []  # inference output
         for i in range(self.nl):
+            print(f'Detect In0 x[{i}].shape: {x[i].shape} Type={self.m[i].type}')
             x[i] = self.m[i](x[i])  # conv
+            print(f'Detect Out0 x[{i}].shape: {x[i].shape} Type={self.m[i].type}')
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
-            x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+            print(f'bs={bs}, ny={ny}, nx={nx} na={self.na} no={self.no}')
+            if self.training or not self.export_to_dlc:  # reshape 5d
+                x_reshape_print = x[i].view(bs, self.na, self.no, ny, nx)
+                print(f'Detect Out1 x[{i}].shape: {x_reshape_print.shape} '
+                      f'Type=Reshape_5D (bs, self.na, self.no, ny, nx)={(bs, self.na, self.no, ny, nx)}')
+                x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 4, 2)')
+
+            else:  # reshape 4d
+                # based on https://github.com/ultralytics/yolov5/issues/4790#issuecomment-1148899676
+                # change to 4d reshape operation, which is supported with SNPE
+                # x[i] = x[i].view(self.na, self.no, ny, nx).permute(0, 2, 3, 1).contiguous()
+                x[i] = x[i].view(bs, self.na, self.no, (ny * nx))
+                print(f'Detect Out1 x[{i}].shape: {x[i].shape} '
+                      f'Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = {(bs, self.na, self.no, (ny * nx))}')
+                x[i] = x[i].permute(0, 1, 3, 2).contiguous()
+                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 2)')
 
             if not self.training:  # inference
-                if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
-                    self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
+                if self.export_to_dlc:  # implement grid construction in C++
+                    y = x[i].sigmoid()
+                    print(f'Detect x[{i}] y_out.shape=y.view(bs, -1, self.no) = {y.view(bs, -1, self.no).shape}')
+                    z.append(y.view(bs, -1, self.no))
+                else:  # grid construction
+                    if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
+                        self.grid[i], self.anchor_grid[i] = self._make_grid(nx, ny, i)
 
-                if isinstance(self, Segment):  # (boxes + masks)
-                    xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4)
-                    xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
-                    wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh
-                    y = torch.cat((xy, wh, conf.sigmoid(), mask), 4)
-                else:  # Detect (boxes only)
-                    xy, wh, conf = x[i].sigmoid().split((2, 2, self.nc + 1), 4)
-                    xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
-                    wh = (wh * 2) ** 2 * self.anchor_grid[i]  # wh
-                    y = torch.cat((xy, wh, conf), 4)
-                z.append(y.view(bs, self.na * nx * ny, self.no))
-
+                    if isinstance(self, Segment):  # (boxes + masks)
+                        xy, wh, conf, mask = x[i].split((2, 2, self.nc + 1, self.no - self.nc - 5), 4)
+                        xy = (xy.sigmoid() * 2 + self.grid[i]) * self.stride[i]  # xy
+                        wh = (wh.sigmoid() * 2) ** 2 * self.anchor_grid[i]  # wh
+                        y = torch.cat((xy, wh, conf.sigmoid(), mask), 4)
+                    else:  # Detect (boxes only)
+                        xy, wh, conf = x[i].sigmoid().split((2, 2, self.nc + 1), 4)
+                        xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
+                        wh = (wh * 2) ** 2 * self.anchor_grid[i]  # wh
+                        y = torch.cat((xy, wh, conf), 4)
+                    print(f'Detect x[{i}] xy.shape={xy.shape} wh.shape={wh.shape} conf.shape={conf.shape} y.shape={y.shape}')
+                    print(f'Detect x[{i}] y_out.shape=y.view(bs, self.na * nx * ny, self.no) = {y.view(bs, self.na * nx * ny, self.no).shape}')
+                    z.append(y.view(bs, self.na * nx * ny, self.no))
+                print(f'Detect z[0].shape={z[0].shape}')
         return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
 
     def _make_grid(self, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, "1.10.0")):
@@ -140,19 +166,32 @@ class Segment(Detect):
         return (x, p) if self.training else (x[0], p) if self.export else (x[0], p, x[1])
 
 
+def print_layer_shape(x, i, m, prefix):
+    if isinstance(x, torch.Tensor):
+        print(f'{prefix} {i} {x.shape}  {m.type}')
+    elif isinstance(x, list) and isinstance(x[0], torch.Tensor):
+        print(f'{prefix} {i} {[x_i.shape for x_i in x]}  {m.type}')
+    elif isinstance(x, list) and isinstance(x[0], list) and isinstance(x[0][0], torch.Tensor):
+        print(f'{prefix} {i} {[[x_i_i.shape for x_i_i in x_i] for x_i in x]}  {m.type}')
+    return
+
+
 class BaseModel(nn.Module):
     # YOLOv5 base model
     def forward(self, x, profile=False, visualize=False):
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 
-    def _forward_once(self, x, profile=False, visualize=False):
+    def _forward_once(self, x, profile=False, visualize=False, print_shapes=False):
+        print(f'_forward_once In {x.shape}')
         y, dt = [], []  # outputs
-        for m in self.model:
+        for i, m in enumerate(self.model):
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
+            print_layer_shape(x, i, m, 'Input ') if print_shapes else None
             x = m(x)  # run
+            print_layer_shape(x, i, m, 'Output') if print_shapes else None
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)

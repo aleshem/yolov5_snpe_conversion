@@ -1,0 +1,29 @@
+commit 4e3b651c0d05a041f95d919f191e8988ba101ae5
+Author: aleshem <leshemanat@gmail.com>
+Date:   Mon Jan 22 11:54:06 2024 +0000
+
+    Update README to onnx dlc conversion
+
+commit 828ba9d655dd4f8892ab0894b7ae5259f157cfbe
+Author: aleshem <leshemanat@gmail.com>
+Date:   Mon Jan 22 10:43:28 2024 +0000
+
+    export yolo detector to dlc
+    
+    reshape 5d changed to 4d in export
+    remove grid in export
+    yolov5s-LeakyReLU_1class.yaml
+
+commit 050c72cbba9ca24dcff103fca54caf21d7e8b527
+Author: Glenn Jocher <glenn.jocher@ultralytics.com>
+Date:   Thu Jan 18 17:53:34 2024 +0100
+
+    YAML reformat (#12648)
+    
+    * YAML reformat
+    
+    * Auto-format by Ultralytics actions
+    
+    ---------
+    
+    Co-authored-by: UltralyticsAssistant <web@ultralytics.com>

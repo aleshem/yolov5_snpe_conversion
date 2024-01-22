@@ -86,8 +86,15 @@ from utils.general import (
     yaml_save,
 )
 from utils.torch_utils import select_device, smart_inference_mode
+from utils.general import save_git_log
 
 MACOS = platform.system() == "Darwin"  # macOS environment
+
+import subprocess
+import time
+import warnings
+from pathlib import Path
+import pandas as pd
 
 
 class iOSModel(torch.nn.Module):
@@ -756,6 +763,7 @@ def run(
     topk_all=100,  # TF.js NMS: topk for all classes to keep
     iou_thres=0.45,  # TF.js NMS: IoU threshold
     conf_thres=0.25,  # TF.js NMS: confidence threshold
+    export_to_dlc=False,  # prepare to export to SNPE DLC format
 ):
     t = time.time()
     include = [x.lower() for x in include]  # to lowercase
@@ -770,7 +778,7 @@ def run(
     if half:
         assert device.type != "cpu" or coreml, "--half only compatible with GPU export, i.e. use --device 0"
         assert not dynamic, "--half not compatible with --dynamic, i.e. use either --half or --dynamic but not both"
-    model = attempt_load(weights, device=device, inplace=True, fuse=True)  # load FP32 model
+    model = attempt_load(weights, device=device, inplace=True, fuse=True, export_to_dlc=export_to_dlc)  # load FP32 model
 
     # Checks
     imgsz *= 2 if len(imgsz) == 1 else 1  # expand
@@ -892,6 +900,7 @@ def parse_opt(known=False):
     parser.add_argument("--topk-all", type=int, default=100, help="TF.js NMS: topk for all classes to keep")
     parser.add_argument("--iou-thres", type=float, default=0.45, help="TF.js NMS: IoU threshold")
     parser.add_argument("--conf-thres", type=float, default=0.25, help="TF.js NMS: confidence threshold")
+    parser.add_argument("--export-to-dlc", action="store_true", help="SNPE: prepare to export to SNPE")
     parser.add_argument(
         "--include",
         nargs="+",
@@ -906,6 +915,11 @@ def parse_opt(known=False):
 def main(opt):
     for opt.weights in opt.weights if isinstance(opt.weights, list) else [opt.weights]:
         run(**vars(opt))
+    output_results_path = Path(opt.weights).parent
+    save_git_log(str(output_results_path))
+    with open(os.path.join(output_results_path, 'export_args.txt'), 'w') as f:
+        f.write(str(opt))
+        print(f'export_args.txt saved to {output_results_path}')
 
 
 if __name__ == "__main__":

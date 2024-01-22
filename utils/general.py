@@ -1221,3 +1221,26 @@ if Path(inspect.stack()[0].filename).parent.parent.as_posix() in inspect.stack()
     cv2.imread, cv2.imwrite, cv2.imshow = imread, imwrite, imshow  # redefine
 
 # Variables ------------------------------------------------------------------------------------------------------------
+
+
+def save_git_log(output_dir: str, max_commits: int = 3):
+    """
+    save git log and diff to output_dir. make sure the encoding is utf-8 with no bad characters
+    also save git diff, to show what changed since the commit
+    :param output_dir:
+    :param max_commits:
+    :return:
+    """
+    import git
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    with open(Path(output_dir) / 'git_log.txt', 'w', encoding='utf-8') as fp:
+        fp.write(git.Repo((str(Path(__file__).parent)),
+                          search_parent_directories=True).git.log(max_count=max_commits))
+        print(f'git log added to {output_dir}')
+
+    # save git diff
+    with open(Path(output_dir) / 'git_diff.txt', 'w', encoding='utf-8') as fp:
+        fp.write(git.Repo((str(Path(__file__).parent)),
+                          search_parent_directories=True).git.diff())
+        print(f'git diff added to {output_dir}')

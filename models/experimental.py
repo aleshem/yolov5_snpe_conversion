@@ -69,7 +69,7 @@ class Ensemble(nn.ModuleList):
         return y, None  # inference, train output
 
 
-def attempt_load(weights, device=None, inplace=True, fuse=True):
+def attempt_load(weights, device=None, inplace=True, fuse=True, export_to_dlc=False):
     # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
     from models.yolo import Detect, Model
 
@@ -91,6 +91,8 @@ def attempt_load(weights, device=None, inplace=True, fuse=True):
         t = type(m)
         if t in (nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU, Detect, Model):
             m.inplace = inplace
+            if t is Detect and export_to_dlc:
+                m.export_to_dlc = True
             if t is Detect and not isinstance(m.anchor_grid, list):
                 delattr(m, "anchor_grid")
                 setattr(m, "anchor_grid", [torch.zeros(1)] * m.nl)
