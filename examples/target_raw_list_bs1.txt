@@ -1,0 +1,1 @@
+/home/ubuntu/multi/yolov5_snpe_conversion/examples/float_data_bs1.bin
