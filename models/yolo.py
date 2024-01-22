@@ -87,36 +87,36 @@ class Detect(nn.Module):
         self.register_buffer("anchors", torch.tensor(anchors).float().view(self.nl, -1, 2))  # shape(nl,na,2)
         self.m = nn.ModuleList(nn.Conv2d(x, self.no * self.na, 1) for x in ch)  # output conv
         self.inplace = inplace  # use inplace ops (e.g. slice assignment)
+        self.print_shapes = False  # print layer sizes
 
     def forward(self, x):
         z = []  # inference output
         for i in range(self.nl):
             print(f'Detect In0 x[{i}].shape: {x[i].shape} Type={self.m[i].type}')
+            print_layer_shape(x, i, self.m[i], 'Detect Input ') if self.print_shapes else None
             x[i] = self.m[i](x[i])  # conv
-            print(f'Detect Out0 x[{i}].shape: {x[i].shape} Type={self.m[i].type}')
+            print_layer_shape(x, i, self.m[i], 'Detect Output') if self.print_shapes else None
             bs, _, ny, nx = x[i].shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
-            print(f'bs={bs}, ny={ny}, nx={nx} na={self.na} no={self.no}')
+            print(f'bs={bs}, ny={ny}, nx={nx} na={self.na} no={self.no}') if self.print_shapes else None
             if self.training or not self.export_to_dlc:  # reshape 5d
-                x_reshape_print = x[i].view(bs, self.na, self.no, ny, nx)
-                print(f'Detect Out1 x[{i}].shape: {x_reshape_print.shape} '
-                      f'Type=Reshape_5D (bs, self.na, self.no, ny, nx)={(bs, self.na, self.no, ny, nx)}')
                 x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
-                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 4, 2)')
-
+                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 4, 2)') \
+                    if self.print_shapes else None
             else:  # reshape 4d
-                # based on https://github.com/ultralytics/yolov5/issues/4790#issuecomment-1148899676
                 # change to 4d reshape operation, which is supported with SNPE
-                # x[i] = x[i].view(self.na, self.no, ny, nx).permute(0, 2, 3, 1).contiguous()
                 x[i] = x[i].view(bs, self.na, self.no, (ny * nx))
                 print(f'Detect Out1 x[{i}].shape: {x[i].shape} '
-                      f'Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = {(bs, self.na, self.no, (ny * nx))}')
+                      f'Type=Reshape_4d (bs, self.na, self.no, (ny * nx)) = {(bs, self.na, self.no, (ny * nx))}') \
+                    if self.print_shapes else None
                 x[i] = x[i].permute(0, 1, 3, 2).contiguous()
-                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 2)')
+                print(f'Detect Out2 x[{i}].shape: {x[i].shape} Type=Permute(0, 1, 3, 2)')\
+                    if self.print_shapes else None
 
             if not self.training:  # inference
                 if self.export_to_dlc:  # implement grid construction in C++
                     y = x[i].sigmoid()
-                    print(f'Detect x[{i}] y_out.shape=y.view(bs, -1, self.no) = {y.view(bs, -1, self.no).shape}')
+                    print(f'Detect x[{i}] y_out.shape=y.view(bs, -1, self.no) = {y.view(bs, -1, self.no).shape}') \
+                        if self.print_shapes else None
                     z.append(y.view(bs, -1, self.no))
                 else:  # grid construction
                     if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
@@ -132,10 +132,13 @@ class Detect(nn.Module):
                         xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
                         wh = (wh * 2) ** 2 * self.anchor_grid[i]  # wh
                         y = torch.cat((xy, wh, conf), 4)
-                    print(f'Detect x[{i}] xy.shape={xy.shape} wh.shape={wh.shape} conf.shape={conf.shape} y.shape={y.shape}')
-                    print(f'Detect x[{i}] y_out.shape=y.view(bs, self.na * nx * ny, self.no) = {y.view(bs, self.na * nx * ny, self.no).shape}')
+                    if self.print_shapes:
+                        print(f'Detect x[{i}] xy.shape={xy.shape} wh.shape={wh.shape} '
+                              f'conf.shape={conf.shape} y.shape={y.shape}')
+                        print(f'Detect x[{i}] y_out.shape=y.view(bs, self.na * nx * ny, self.no) ='
+                              f' {y.view(bs, self.na * nx * ny, self.no).shape}')
                     z.append(y.view(bs, self.na * nx * ny, self.no))
-                print(f'Detect z[0].shape={z[0].shape}')
+                print(f'Detect z[0].shape={z[0].shape}') if self.print_shapes else None
         return x if self.training else (torch.cat(z, 1),) if self.export else (torch.cat(z, 1), x)
 
     def _make_grid(self, nx=20, ny=20, i=0, torch_1_10=check_version(torch.__version__, "1.10.0")):

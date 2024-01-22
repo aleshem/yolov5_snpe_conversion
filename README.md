@@ -79,3 +79,10 @@ snpe_2_10_0_4541/bin/x86_64-linux-clang/snpe-dlc-quantize \
       --debug1
 ```
 
+## Run the model on the DSP
+* update the C++ following the instructions in this [yolov5 issue](https://github.com/ultralytics/yolov5/issues/4790#issuecomment-1148899676)
+* Build the C++ code
+```bash
+/data/local/tmp/dnn-test/snpe2.10 # LD_LIBRARY_PATH=arm64-v8a ./run-dnn --native-library-dir arm64-v8a --dnn ../best_quantized.dlc   --input-layer images --width 320 --height 256 --channels 3 --iterations 100 --batch-size 1
+```
+* The runtime should be around 13ms for a single image with size 256x320
