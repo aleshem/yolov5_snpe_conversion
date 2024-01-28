@@ -155,7 +155,7 @@ class BaseModel(nn.Module):
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 
     def _forward_once(self, x, profile=False, visualize=False):
-        print(f'_forward_once In {x.shape}')
+        # print(f'_forward_once In {x.shape}')
         y, dt = [], []  # outputs
         for i, m in enumerate(self.model):
             if m.f != -1:  # if not from previous layer
