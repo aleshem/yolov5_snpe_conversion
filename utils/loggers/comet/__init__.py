@@ -338,7 +338,11 @@ class CometLogger:
         for key in ["train", "val", "test"]:
             split_path = metadata.get(key)
             if split_path is not None:
-                metadata[key] = split_path.replace(path, "")
+                if isinstance(split_path, list):
+                    split_path_new = [split_path_i.replace(path, "") for split_path_i in split_path]
+                    metadata[key] = split_path_new
+                else:
+                    metadata[key] = split_path.replace(path, "")
 
         artifact = comet_ml.Artifact(name=dataset_name, artifact_type="dataset", metadata=metadata)
         for key in metadata.keys():
