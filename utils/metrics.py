@@ -8,6 +8,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import plotly.graph_objects as go
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+import plotly.offline as pyo
+
 
 from utils import TryExcept, threaded
 
@@ -356,8 +361,8 @@ def plot_mc_curve(px, py, save_dir=Path("mc_curve.png"), names=(), xlabel="Confi
     else:
         ax.plot(px, py.T, linewidth=1, color="grey")  # plot(confidence, metric)
 
-    y = smooth(py.mean(0), 0.05)
-    ax.plot(px, y, linewidth=3, color="blue", label=f"all classes {y.max():.2f} at {px[y.argmax()]:.3f}")
+    y_smoothed = smooth(py.mean(0), 0.05)
+    ax.plot(px, y_smoothed, linewidth=3, color="blue", label=f"all classes {y_smoothed.max():.2f} at {px[y_smoothed.argmax()]:.3f}")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_xlim(0, 1)
@@ -366,3 +371,30 @@ def plot_mc_curve(px, py, save_dir=Path("mc_curve.png"), names=(), xlabel="Confi
     ax.set_title(f"{ylabel}-Confidence Curve")
     fig.savefig(save_dir, dpi=250)
     plt.close(fig)
+
+    # Metric-confidence curve in plotly
+    fig = make_subplots(rows=1, cols=1, subplot_titles=[f"{ylabel}-Confidence Curve"])
+
+    if 0 < len(names) < 21:  # display per-class legend if < 21 classes
+        for i, y in enumerate(py):
+            fig.add_trace(go.Scatter(x=px, y=y, mode='lines', name=f"{names[i]}"), row=1, col=1)
+    else:
+        for y in py.T:
+            fig.add_trace(go.Scatter(x=px, y=y, mode='lines', line=dict(color='grey')), row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=px, y=y_smoothed, mode='lines', line=dict(color='blue'),
+                             name=f"all classes {y_smoothed.max():.2f} at {px[y_smoothed.argmax()]:.3f}"), row=1,
+                  col=1)
+
+    fig.update_xaxes(title_text=xlabel, range=[0, 1], row=1, col=1)
+    fig.update_yaxes(title_text=ylabel, range=[0, 1], row=1, col=1)
+
+    fig.update_layout(
+        title=f"{ylabel}-Confidence Curve",
+        legend=dict(x=1.04, y=1, traceorder="normal", font=dict(family="sans-serif", size=12),
+                    bgcolor="rgba(255, 255, 255, 0.5)"),
+        margin=dict(l=50, r=50, t=50, b=50)
+    )
+
+    # Save the plot to an HTML file
+    pyo.plot(fig, filename=str(save_dir) + '.html', auto_open=False)
